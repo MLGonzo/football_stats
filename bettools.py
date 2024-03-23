@@ -10,7 +10,13 @@ def generate_seasons(start_year, end_year):
         seasons.append(start + end)
     return seasons
 
-def get_data(season_list, league_list, col_list=['Div','Date','HomeTeam','AwayTeam','FTHG','FTAG','PSH','PSD','PSA','home_max_odds','away_max_odds']):
+def get_data(season_list, league_list, additional_cols=[]):
+    
+    col_list=['Div','Date','HomeTeam','AwayTeam','FTHG','FTAG','PSH','PSD','PSA','home_max_odds','away_max_odds']
+    
+    for col in additional_cols:
+        col_list.append(col)
+
     df_ls = []
     
     bookmakers = ['B365','BW','IW','PS','WH','VC']
