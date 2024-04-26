@@ -109,3 +109,30 @@ def find_best_fit_goals(prob_home_win, prob_draw, prob_away_win):
         return fitted_goals_home, fitted_goals_away
     else:
         return None
+
+def kelly_criterion(probability, odds, bankroll, kelly_fraction=1.0):
+    """
+    Calculate the optimal betting amount using the Kelly Criterion, with an option to use a fraction of the full recommendation.
+    
+    Parameters:
+    - probability: The probability of the outcome occurring.
+    - odds: The decimal odds offered for the bet.
+    - bankroll: The current amount in your bankroll.
+    - kelly_fraction: Fraction of the Kelly bet to use (default is 1.0 for 100%).
+    
+    Returns:
+    - The optimal amount to bet from your bankroll, adjusted by the specified Kelly fraction.
+    """
+    b = odds - 1  # Convert decimal odds to b in the formula
+    q = 1 - probability  # Probability of losing
+    
+    # Calculate the fraction of the bankroll to bet, according to the Kelly Criterion
+    f_star = (b * probability - q) / b
+    
+    # Adjust the fraction with the specified Kelly fraction
+    f_star = max(f_star, 0) * kelly_fraction
+    
+    # Calculate the amount to bet
+    bet_amount = f_star * bankroll
+    
+    return bet_amount
