@@ -136,3 +136,65 @@ def kelly_criterion(probability, odds, bankroll, kelly_fraction=1.0):
     bet_amount = f_star * bankroll
     
     return bet_amount
+
+def calculate_overround(odds_list):
+    """
+    This function calculates the overround from a list of odds. 
+    It will return a negative number if the sum of the implied probabilities of the odds is greater than one
+    """
+    # Convert each odd in the list to implied probability
+    implied_probabilities = [1 / odd for odd in odds_list]
+    # Sum up all the implied probabilities
+    total_implied_probability = sum(implied_probabilities)
+    # Calculate overround
+    overround = (total_implied_probability - 1) * 100
+    return overround
+
+def calculate_exchange_overround(odds_list, commission_rate):
+    """
+    This function calculates the overround from a list of odds for an exchange, adding in the comission rate.
+    The comission should be given as a decimal representation of the percentage (2% = 0.02 etc.)
+    """
+    odds_minus_comission = []
+    for odd in odds_list:
+        profit = odd - 1
+        comm_profit = profit * (1 - commission_rate)
+        revised_odd = comm_profit + 1
+        odds_minus_comission.append(revised_odd)
+    # Convert each odd in the list to implied probability
+    implied_probabilities = [1 / odd for odd in odds_minus_comission]
+    # Sum up all the adjusted implied probabilities
+    total_adjusted_implied_probability = sum(implied_probabilities)
+    # Calculate overround with commission
+    overround = (total_adjusted_implied_probability - 1) * 100
+    return overround
+
+def find_true_probabilities_equal(odds):
+    # Convert odds to implied probabilities
+    probabilities = [1/o for o in odds]
+    # Calculate the total implied probability
+    total_probability = sum(probabilities)
+    # Calculate the overround
+    overround = total_probability - 1
+    # Calculate the adjustment factor for each odd
+    adjustment_factor = overround / len(odds)
+    # Adjust each implied probability
+    adjusted_probabilities = [(1/o) - adjustment_factor for o in odds]
+    return np.array(adjusted_probabilities)
+
+def find_true_probabilities_power(odds):
+    # Convert odds to implied probabilities
+    probabilities = np.array([1/o for o in odds])
+    # Define the objective function to minimize
+    def objective(k):
+        adj_probs = probabilities**k
+        return (1 - np.sum(adj_probs))**2
+    # Initial guess for k
+    initial_k = [1.0]
+    # Bounds for k, ensuring k is not zero
+    bounds = [(0.001, None)]
+    # Minimize the objective function
+    result = minimize(objective, initial_k)
+    # Calculate the true probabilities using the optimized k
+    adjusted_true_probabilities = probabilities ** (result.x[0])
+    return adjusted_true_probabilities
