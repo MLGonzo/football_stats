@@ -2,6 +2,8 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import poisson
 
+from bettools import calculate_ev_from_odds, kelly_criterion
+
 
 def rho_correction(x, y, lambda_x, mu_y, rho):
     if x == 0 and y == 0:
@@ -253,3 +255,38 @@ def get_total_score_xi(xi):
     xi_result = [build_temp_model(dc_df, day, xi=xi) for day in range(99, -1, -3)]
     with open("find_xi_1season_{}.txt".format(str(xi)[2:]), "wb") as thefile:
         pickle.dump(xi_result, thefile)
+
+
+def make_betting_prediction(
+    home_odds,
+    draw_odds,
+    away_odds,
+    params,
+    home_team,
+    away_team,
+    bankroll,
+    kelly_fraction=0.05,
+):
+    predicted_probs = get_1x2_probs(
+        dixon_coles_simulate_match(params, home_team, away_team, max_goals=10)
+    )
+    home_ev = calculate_ev_from_odds(home_odds, predicted_probs["H"])
+    away_ev = calculate_ev_from_odds(away_odds, predicted_probs["A"])
+    draw_ev = calculate_ev_from_odds(draw_odds, predicted_probs["D"])
+    max_ev = max([home_ev, away_ev, draw_ev])
+    if max_ev == home_ev:
+        bet_amount = kelly_criterion(
+            predicted_probs["H"], home_odds, bankroll, kelly_fraction=kelly_fraction
+        )
+        bet_selection = "Home"
+    if max_ev == away_ev:
+        bet_amount = kelly_criterion(
+            predicted_probs["A"], away_odds, bankroll, kelly_fraction=kelly_fraction
+        )
+        bet_selection = "Away"
+    elif max_ev == draw_ev:
+        bet_amount = kelly_criterion(
+            predicted_probs["D"], draw_odds, bankroll, kelly_fraction=kelly_fraction
+        )
+        bet_selection = "Draw"
+    return bet_selection, bet_amount
